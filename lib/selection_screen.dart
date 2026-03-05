@@ -8,6 +8,7 @@ import 'theme_provider.dart';
 import 'settings_screen.dart';
 import 'package:upgrader/upgrader.dart';
 import 'package:version/version.dart';
+import 'package:fieldmeasure/l10n/app_localizations.dart';
 
 class SelectionScreen extends StatefulWidget {
   const SelectionScreen({super.key});
@@ -19,6 +20,7 @@ class SelectionScreen extends StatefulWidget {
 class _SelectionScreenState extends State<SelectionScreen> {
   void _showAboutDialog(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     showDialog(
       context: context,
@@ -26,21 +28,21 @@ class _SelectionScreenState extends State<SelectionScreen> {
         return AlertDialog(
           backgroundColor: isDark ? Colors.grey[850] : Colors.white,
           title: Text(
-            'About FieldMeasure',
+            l10n.aboutFieldMeasure,
             style: TextStyle(color: isDark ? Colors.teal : Colors.teal[700]),
           ),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
                 Text(
-                  'This app helps you measure distances and heights using your phone\'s sensors.\nIt may be used by people working in the field (such as lumberjacks or construction workers), or even for fun.\n\nThe app\'s accuracy depends on the phone sensor\'s accuracy',
+                  l10n.aboutDescription,
                   style: TextStyle(
                     color: isDark ? Colors.white70 : Colors.grey[800],
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Created by Mohamed-Amine Benali',
+                  l10n.createdBy,
                   style: TextStyle(
                     color: isDark ? Colors.white70 : Colors.grey[700],
                     fontStyle: FontStyle.italic,
@@ -50,7 +52,7 @@ class _SelectionScreenState extends State<SelectionScreen> {
                 InkWell(
                   onTap: () => launchUrl(
                       Uri.parse('https://linkedin.com/in/mohamed-amine-benali')),
-                  child: Text(
+                  child: const Text(
                     'LinkedIn',
                     style: TextStyle(
                       color: Colors.teal,
@@ -61,8 +63,8 @@ class _SelectionScreenState extends State<SelectionScreen> {
                 const SizedBox(height: 12),
                 InkWell(
                   onTap: () =>
-                      launchUrl(Uri.parse('https://github.com/medamine980')),
-                  child: Text(
+                      launchUrl(Uri.parse('https://github.com/medamine-official')),
+                  child: const Text(
                     'GitHub',
                     style: TextStyle(
                       color: Colors.teal,
@@ -75,7 +77,7 @@ class _SelectionScreenState extends State<SelectionScreen> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Close', style: TextStyle(color: Colors.teal)),
+              child: Text(l10n.close, style: const TextStyle(color: Colors.teal)),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -88,8 +90,7 @@ class _SelectionScreenState extends State<SelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
+    final l10n = AppLocalizations.of(context)!;
     const appcastURL = 'https://raw.githubusercontent.com/medamine980/FieldMeasure/main/appcast.xml';
 
     return UpgradeAlert(
@@ -118,7 +119,7 @@ class _SelectionScreenState extends State<SelectionScreen> {
               child: Image.asset('assets/app_logo_helmet_black.png'),
             ),
           ),
-          title: const Text('FieldMeasure'),
+          title: Text(l10n.appTitle),
           backgroundColor: Colors.teal,
           foregroundColor: Colors.white,
           actions: [
@@ -144,7 +145,7 @@ class _SelectionScreenState extends State<SelectionScreen> {
                 width: 250,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.height),
-                  label: const Text('Get Height'),
+                  label: Text(l10n.getHeight),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.teal,
                     foregroundColor: Colors.white,
@@ -170,7 +171,7 @@ class _SelectionScreenState extends State<SelectionScreen> {
                 width: 250,
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.straighten),
-                  label: const Text('Get Distance'),
+                  label: Text(l10n.getDistance),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.teal,
                     foregroundColor: Colors.white,

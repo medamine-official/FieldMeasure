@@ -3,11 +3,14 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:fieldmeasure/gps_distance_screen.dart';
 import 'angle_painter.dart';
+import 'settings_provider.dart';
+import 'l10n/app_localizations.dart';
 
 // --- WIDGET 1: THE PARENT WIDGET THAT CONTROLS THE TUTORIAL ---
 class DistanceMeasurementScreenWithTutorial extends StatefulWidget {
@@ -59,31 +62,28 @@ class _DistanceMeasurementScreenWithTutorialState
     setState(() => _showAnimation = true);
   }
 
-  // NEW: Check if showcase is active
   bool _isShowcaseActive() {
     return ShowcaseView.get().isShowCaseCompleted == false;
   }
 
-  // NEW: Handle back button press
   Future<bool> _onWillPop() async {
-    // If Lottie animation is showing, dismiss it
     if (_showAnimation) {
       setState(() => _showAnimation = false);
-      return false; // Prevent default back behavior
+      return false;
     }
 
-    // If showcase is active, dismiss it
     if (_isShowcaseActive()) {
       ShowcaseView.get().dismiss();
-      return false; // Prevent default back behavior
+      return false;
     }
 
-    // Allow normal back navigation
     return true;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) async {
@@ -100,7 +100,6 @@ class _DistanceMeasurementScreenWithTutorialState
             onShowTutorial: _showTutorialWithAnimation,
           ),
 
-          // LOTTIE OVERLAY
           if (_showAnimation)
             GestureDetector(
               onTap: _onTutorialAnimationDone,
@@ -125,9 +124,9 @@ class _DistanceMeasurementScreenWithTutorialState
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Tap to skip and continue',
-                        style: TextStyle(
+                      Text(
+                        l10n.tapToSkip,
+                        style: const TextStyle(
                           color: Colors.black87,
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -165,7 +164,7 @@ class _DistanceMeasurementScreenState extends State<DistanceMeasurementScreen> {
   double _heading = 0.0;
   double? _referenceHeading;
   double _angle = 0.0;
-  double _knownDistance = 10.0;
+  double _knownDistance = 10.0; 
   double _resultDistance = 0.0;
 
   StreamSubscription<MagnetometerEvent>? _magnetometerSubscription;
@@ -210,11 +209,17 @@ class _DistanceMeasurementScreenState extends State<DistanceMeasurementScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
+    final settingsProvider = Provider.of<SettingsProvider>(context);
+
+    final unitLabel = settingsProvider.getUnitLabel();
+    final maxDist = settingsProvider.maxDistance;
+    final divisions = settingsProvider.distanceDivisions;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Measure Distance"),
+        title: Text(l10n.measureDistance),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -266,9 +271,8 @@ class _DistanceMeasurementScreenState extends State<DistanceMeasurementScreen> {
             children: [
               Showcase(
                 key: DistanceMeasurementScreen.keyKnownDistance,
-                title: 'Step 1: Look at Your Object & Move',
-                description:
-                'First, spot your object. Now, walk straight to your side for a known distance (e.g., 5 meters). Use this slider to enter that distance.',
+                title: l10n.step1Title,
+                description: l10n.step1Desc,
                 child: Container(
                   padding: const EdgeInsets.all(16.0),
                   color: isDark
@@ -278,17 +282,17 @@ class _DistanceMeasurementScreenState extends State<DistanceMeasurementScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Known Distance: ${_knownDistance.toStringAsFixed(1)} m',
+                        l10n.knownDistance(_knownDistance.toStringAsFixed(1), unitLabel),
                         style: TextStyle(
                           color: isDark ? Colors.white : Colors.grey[900],
                           fontSize: 16,
                         ),
                       ),
                       Slider(
-                        value: _knownDistance,
+                        value: _knownDistance.clamp(1.0, maxDist),
                         min: 1,
-                        max: 50,
-                        divisions: 49,
+                        max: maxDist,
+                        divisions: divisions,
                         label: _knownDistance.round().toString(),
                         onChanged: (double value) {
                           setState(() {
@@ -313,26 +317,24 @@ class _DistanceMeasurementScreenState extends State<DistanceMeasurementScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _buildResultDisplay(
-                            "Angle", '${_angle.abs().toStringAsFixed(1)}°'),
+                            l10n.angle, '${_angle.abs().toStringAsFixed(1)}°'),
                         Showcase(
                           key: DistanceMeasurementScreen.keyResult,
-                          title: 'Step 3: Measure!',
-                          description:
-                          'Finally, slowly turn your phone to aim back at the object. The calculated distance will appear here instantly!',
+                          title: l10n.step3Title,
+                          description: l10n.step3Desc,
                           child: _buildResultDisplay(
-                              "Distance",
+                              l10n.distance,
                               _resultDistance <= 0
                                   ? '---'
-                                  : '${_resultDistance.toStringAsFixed(2)} m'),
+                                  : '${_resultDistance.toStringAsFixed(2)} $unitLabel'),
                         ),
                       ],
                     ),
                     const SizedBox(height: 24),
                     Showcase(
                       key: DistanceMeasurementScreen.keySetReference,
-                      title: 'Step 2: Set Your Reference',
-                      description:
-                      "Great! Now that you've moved, aim your phone back at the exact spot where you were first standing and tap this button.",
+                      title: l10n.step2Title,
+                      description: l10n.step2Desc,
                       child: ElevatedButton(
                         onPressed: _setReferencePoint,
                         style: ElevatedButton.styleFrom(
@@ -345,8 +347,8 @@ class _DistanceMeasurementScreenState extends State<DistanceMeasurementScreen> {
                               fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         child: Text(_referenceHeading == null
-                            ? 'Set Reference'
-                            : 'Reset Reference'),
+                            ? l10n.setReference
+                            : l10n.resetReference),
                       ),
                     ),
                   ],

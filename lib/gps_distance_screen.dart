@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart' as latlong;
 import 'package:permission_handler/permission_handler.dart' as permission_handler;
+import 'package:provider/provider.dart';
+import 'settings_provider.dart';
+import 'package:fieldmeasure/l10n/app_localizations.dart';
 
 class GpsDistanceScreen extends StatefulWidget {
   const GpsDistanceScreen({super.key});
@@ -33,7 +36,6 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // When app resumes, recheck permission and service status
     if (state == AppLifecycleState.resumed) {
       _checkPermissionAndInitialize();
     }
@@ -52,7 +54,6 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
     });
 
     try {
-      // Check if location service is enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         setState(() {
@@ -64,10 +65,8 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
         return;
       }
 
-      // Check permission status
       LocationPermission permission = await Geolocator.checkPermission();
 
-      // If it's the first visit and permission is denied (not permanently), request it automatically
       if (_isFirstVisit && permission == LocationPermission.denied) {
         _isFirstVisit = false;
         permission = await Geolocator.requestPermission();
@@ -86,7 +85,6 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
         return;
       }
 
-      // Permission granted, start location updates
       _isFirstVisit = false;
       await _startLocationUpdates();
 
@@ -102,12 +100,11 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
   }
 
   Future<void> _startLocationUpdates() async {
-    // Cancel existing stream if any
     await _positionStream?.cancel();
 
     const LocationSettings locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
-      distanceFilter: 1, // Update every 1 meter moved
+      distanceFilter: 1,
     );
 
     _positionStream = Geolocator.getPositionStream(locationSettings: locationSettings)
@@ -139,23 +136,23 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
         permission == LocationPermission.always) {
       await _checkPermissionAndInitialize();
     } else if (permission == LocationPermission.deniedForever) {
-      // Show dialog to open app settings
       if (!mounted) return;
 
       final isDark = Theme.of(context).brightness == Brightness.dark;
+      final l10n = AppLocalizations.of(context)!;
 
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: isDark ? Colors.grey[850] : Colors.white,
           title: Text(
-            'Location Permission Required',
+            l10n.locationPermissionRequired,
             style: TextStyle(
               color: isDark ? Colors.white : Colors.grey[900],
             ),
           ),
           content: Text(
-            'Location permission is permanently denied. Please enable it in your device settings to use this feature.',
+            l10n.locationPermissionDesc,
             style: TextStyle(
               color: isDark ? Colors.white70 : Colors.grey[700],
             ),
@@ -166,15 +163,14 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
                 Navigator.pop(context);
                 _checkPermissionAndInitialize();
               },
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             TextButton(
               onPressed: () async {
                 Navigator.pop(context);
                 await permission_handler.openAppSettings();
-                // Permission will be rechecked when app resumes
               },
-              child: const Text('Open Settings'),
+              child: Text(l10n.openSettings),
             ),
           ],
         ),
@@ -189,7 +185,6 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
 
   Future<void> _openLocationSettings() async {
     await Geolocator.openLocationSettings();
-    // Service status will be rechecked when app resumes
   }
 
   void _setPoint(String point) {
@@ -232,10 +227,11 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("GPS Distance"),
+        title: Text(l10n.gpsDistance),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -267,6 +263,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
 
   Widget _buildServiceDisabledWidget() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Padding(
@@ -281,7 +278,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
             ),
             const SizedBox(height: 24),
             Text(
-              'Location Services Disabled',
+              l10n.locationServicesDisabled,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -291,7 +288,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
             ),
             const SizedBox(height: 16),
             Text(
-              'Please enable location services in your device settings to measure distances.',
+              l10n.locationServicesDesc,
               style: TextStyle(
                 fontSize: 16,
                 color: isDark ? Colors.white70 : Colors.grey[700],
@@ -302,7 +299,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
             ElevatedButton.icon(
               onPressed: _openLocationSettings,
               icon: const Icon(Icons.settings),
-              label: const Text('Open Location Settings'),
+              label: Text(l10n.openSettings),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
                 foregroundColor: Colors.white,
@@ -316,9 +313,9 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
             const SizedBox(height: 16),
             TextButton(
               onPressed: _checkPermissionAndInitialize,
-              child: const Text(
-                'Check Again',
-                style: TextStyle(color: Colors.teal),
+              child: Text(
+                l10n.checkAgain,
+                style: const TextStyle(color: Colors.teal),
               ),
             ),
           ],
@@ -329,6 +326,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
 
   Widget _buildPermissionDeniedWidget() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Padding(
@@ -343,7 +341,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
             ),
             const SizedBox(height: 24),
             Text(
-              'Location Permission Required',
+              l10n.locationPermissionRequired,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -353,7 +351,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
             ),
             const SizedBox(height: 16),
             Text(
-              'This app needs location access to measure distances between two GPS points.',
+              l10n.locationPermissionDesc,
               style: TextStyle(
                 fontSize: 16,
                 color: isDark ? Colors.white70 : Colors.grey[700],
@@ -364,7 +362,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
             ElevatedButton.icon(
               onPressed: _requestPermission,
               icon: const Icon(Icons.location_on),
-              label: const Text('Grant Permission'),
+              label: Text(l10n.grantPermission),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
                 foregroundColor: Colors.white,
@@ -383,6 +381,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
 
   Widget _buildErrorWidget() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Padding(
@@ -415,7 +414,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
                   vertical: 16,
                 ),
               ),
-              child: const Text('Try Again'),
+              child: Text(l10n.tryAgain),
             ),
           ],
         ),
@@ -424,8 +423,6 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
   }
 
   Widget buildMeasurementUI() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -471,11 +468,23 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
 
   Widget _buildDistanceResultDisplay() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
+    final settingsProvider = Provider.of<SettingsProvider>(context);
+
+    final convertedDistance = settingsProvider.convertFromMeters(_distanceInMeters);
+    final unitLabel = settingsProvider.getUnitLabel();
+
+    String displayValue;
+    if (settingsProvider.unit == MeasurementUnit.meters || settingsProvider.unit == MeasurementUnit.feet) {
+      displayValue = '${convertedDistance.toStringAsFixed(2)} $unitLabel';
+    } else {
+      displayValue = '${convertedDistance.toStringAsFixed(2)} $unitLabel';
+    }
 
     return Column(
       children: [
         Text(
-          'Distance',
+          l10n.distance,
           style: TextStyle(
             color: isDark ? Colors.white70 : Colors.grey[700],
             fontSize: 18,
@@ -493,9 +502,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
         ),
         const SizedBox(height: 10),
         Text(
-          _distanceInMeters < 1000
-              ? '${_distanceInMeters.toStringAsFixed(2)} m'
-              : '${(_distanceInMeters / 1000).toStringAsFixed(2)} km',
+          displayValue,
           style: TextStyle(
             color: isDark ? Colors.white : Colors.grey[900],
             fontSize: 48,
@@ -507,20 +514,21 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
   }
 
   Widget _buildPointButtons() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _pointButton('A', _pointA, () => _setPoint('A')),
-            _pointButton('B', _pointB, () => _setPoint('B')),
+            _pointButton(l10n.point('A'), _pointA, () => _setPoint('A')),
+            _pointButton(l10n.point('B'), _pointB, () => _setPoint('B')),
           ],
         ),
         const SizedBox(height: 20),
         TextButton.icon(
           onPressed: _resetPoints,
           icon: const Icon(Icons.refresh, color: Colors.teal),
-          label: const Text('Reset', style: TextStyle(color: Colors.teal)),
+          label: Text(l10n.reset, style: const TextStyle(color: Colors.teal)),
         )
       ],
     );
@@ -528,6 +536,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
 
   Widget _pointButton(String label, Position? point, VoidCallback onPressed) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
     bool isSet = point != null;
 
     return Column(
@@ -539,7 +548,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
             shape: const CircleBorder(),
             padding: const EdgeInsets.all(32),
           ),
-          child: Text(label,
+          child: Text(label.substring(label.length - 1), // Just the A or B for the button
               style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -549,7 +558,7 @@ class _GpsDistanceScreenState extends State<GpsDistanceScreen> with WidgetsBindi
         Text(
           isSet
               ? 'Lat: ${point!.latitude.toStringAsFixed(3)}\nLon: ${point.longitude.toStringAsFixed(3)}'
-              : 'Not Set',
+              : l10n.notSet,
           textAlign: TextAlign.center,
           style: TextStyle(
             color: isDark ? Colors.white70 : Colors.grey[700],

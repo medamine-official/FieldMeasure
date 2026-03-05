@@ -4,8 +4,11 @@ import 'dart:async';
 import 'dart:math';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:fieldmeasure/l10n/app_localizations.dart';
+import 'settings_provider.dart';
 
 class HeightMeasurementScreen extends StatefulWidget {
   const HeightMeasurementScreen({super.key});
@@ -18,7 +21,7 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
   double _roll = 0.0;
   double _tangentOfRoll = 0.0;
   double _objectHeight = 0.0;
-  double _distanceFromObject = 2.0;
+  double _distanceFromObject = 2.0; 
 
   StreamSubscription<AccelerometerEvent>? _streamSubscription;
   CameraController? _cameraController;
@@ -37,7 +40,6 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // When app resumes, recheck permission
     if (state == AppLifecycleState.resumed) {
       _checkPermissionAndInitialize();
     }
@@ -50,12 +52,11 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
   Future<void> _checkPermissionAndInitialize() async {
     setState(() {
       _isLoading = true;
-      _isCameraInitialized = false; // Reset camera state
+      _isCameraInitialized = false;
     });
 
     final status = await Permission.camera.status;
 
-    // If it's the first visit and permission is denied (not permanently), request it automatically
     if (_isFirstVisit && status.isDenied) {
       _isFirstVisit = false;
       final requestResult = await Permission.camera.request();
@@ -69,7 +70,6 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
         });
       }
     } else {
-      // Not first visit or already granted/permanently denied
       _isFirstVisit = false;
 
       if (status.isGranted) {
@@ -89,7 +89,6 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
         _cameras = await availableCameras();
       }
 
-      // Dispose old controller if exists
       await _cameraController?.dispose();
       _cameraController = null;
 
@@ -113,7 +112,7 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
   }
 
   void _startSensorStream() {
-    if (_streamSubscription != null) return; // Prevent duplicate subscriptions
+    if (_streamSubscription != null) return;
 
     _streamSubscription =
         accelerometerEventStream().listen((AccelerometerEvent event) {
@@ -162,26 +161,26 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
     if (status.isGranted) {
       await _setupCamera();
     } else if (status.isPermanentlyDenied) {
-      // Show dialog to open app settings
       if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
 
       final isDark = Theme.of(context).brightness == Brightness.dark;
+      final l10n = AppLocalizations.of(context)!;
 
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: isDark ? Colors.grey[850] : Colors.white,
           title: Text(
-            'Camera Permission Required',
+            l10n.cameraPermissionRequired,
             style: TextStyle(
               color: isDark ? Colors.white : Colors.grey[900],
             ),
           ),
           content: Text(
-            'Camera permission is permanently denied. Please enable it in your device settings.',
+            l10n.cameraPermissionDesc,
             style: TextStyle(
               color: isDark ? Colors.white70 : Colors.grey[700],
             ),
@@ -190,18 +189,16 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                // After closing dialog, recheck permission in case user granted it
                 _checkPermissionAndInitialize();
               },
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             TextButton(
               onPressed: () async {
                 Navigator.pop(context);
                 await openAppSettings();
-                // Permission will be rechecked when app resumes via didChangeAppLifecycleState
               },
-              child: const Text('Open Settings'),
+              child: Text(l10n.openSettings),
             ),
           ],
         ),
@@ -253,6 +250,7 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
 
   Widget _buildPermissionDeniedWidget() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Padding(
@@ -267,7 +265,7 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
             ),
             const SizedBox(height: 24),
             Text(
-              'Camera Permission Required',
+              l10n.cameraPermissionRequired,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -277,7 +275,7 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
             ),
             const SizedBox(height: 16),
             Text(
-              'This app needs camera access to measure object heights. Please grant camera permission to continue.',
+              l10n.cameraPermissionDesc,
               style: TextStyle(
                 fontSize: 16,
                 color: isDark ? Colors.white70 : Colors.grey[700],
@@ -288,7 +286,7 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
             ElevatedButton.icon(
               onPressed: _retryPermission,
               icon: const Icon(Icons.camera_alt),
-              label: const Text('Grant Permission'),
+              label: Text(l10n.grantPermission),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
                 foregroundColor: Colors.white,
@@ -307,6 +305,12 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
 
   Widget _buildCameraView() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
+    final settingsProvider = Provider.of<SettingsProvider>(context);
+
+    final unitLabel = settingsProvider.getUnitLabel();
+    final maxDist = settingsProvider.maxDistance;
+    final divisions = settingsProvider.distanceDivisions;
 
     return Stack(
       fit: StackFit.expand,
@@ -333,7 +337,7 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildDisplayColumn(
-                  'Tilt Angle',
+                  l10n.tiltAngle,
                   '${_roll.toStringAsFixed(1)}°',
                 ),
                 SizedBox(
@@ -345,8 +349,8 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
                   ),
                 ),
                 _buildDisplayColumn(
-                  'Height',
-                  '${_objectHeight.toStringAsFixed(2)} m',
+                  l10n.height,
+                  '${_objectHeight.toStringAsFixed(2)} $unitLabel',
                   isPrimary: true,
                 ),
               ],
@@ -366,8 +370,7 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
-                    'Your distance from object: '
-                        '${_distanceFromObject.toStringAsFixed(1)} m',
+                    l10n.yourDistanceFromObject(_distanceFromObject.toStringAsFixed(1), unitLabel),
                     style: TextStyle(
                         color: isDark ? Colors.white : Colors.grey[900],
                         fontSize: 18
@@ -375,10 +378,10 @@ class _HeightMeasurementScreenState extends State<HeightMeasurementScreen> with 
                   ),
                 ),
                 Slider(
-                  value: _distanceFromObject,
+                  value: _distanceFromObject.clamp(1.0, maxDist),
                   min: 1,
-                  max: 20,
-                  divisions: 38,
+                  max: maxDist,
+                  divisions: divisions,
                   label: _distanceFromObject.round().toString(),
                   onChanged: (double value) {
                     setState(() {

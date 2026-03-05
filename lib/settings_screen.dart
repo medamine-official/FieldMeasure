@@ -2,34 +2,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'theme_provider.dart';
+import 'settings_provider.dart';
+import 'l10n/app_localizations.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
-
-  @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  late String _selectedUnit;
-  late String _selectedLanguage;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedUnit = 'meters';
-    _selectedLanguage = 'English';
-  }
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final settingsProvider = Provider.of<SettingsProvider>(context);
     final isDark = themeProvider.isDarkMode;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(l10n.settings),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
       ),
@@ -39,7 +28,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 12.0),
             child: Text(
-              'Appearance',
+              l10n.appearance,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: Colors.teal,
                 fontWeight: FontWeight.bold,
@@ -53,8 +42,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: isDark ? Colors.grey[800] : Colors.grey[100],
             ),
             child: ListTile(
-              title: const Text('Dark Mode'),
-              subtitle: const Text('Toggle between light and dark theme'),
+              title: Text(l10n.darkMode),
+              subtitle: Text(l10n.toggleTheme),
               trailing: CustomThemeToggle(
                 value: themeProvider.isDarkMode,
                 onChanged: (value) {
@@ -68,7 +57,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 12.0),
             child: Text(
-              'Measurements',
+              l10n.measurements,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: Colors.teal,
                 fontWeight: FontWeight.bold,
@@ -82,21 +71,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: isDark ? Colors.grey[800] : Colors.grey[100],
             ),
             child: ListTile(
-              title: const Text('Unit System'),
-              subtitle: const Text('Choose your preferred measurement unit'),
-              trailing: DropdownButton<String>(
-                value: _selectedUnit,
+              title: Text(l10n.unitSystem),
+              subtitle: Text(l10n.chooseUnit),
+              trailing: DropdownButton<MeasurementUnit>(
+                value: settingsProvider.unit,
                 underline: const SizedBox(),
                 items: const [
-                  DropdownMenuItem(value: 'meters', child: Text('Meters (m)')),
-                  DropdownMenuItem(value: 'feet', child: Text('Feet (ft)')),
-                  DropdownMenuItem(value: 'kilometers', child: Text('Kilometers (km)')),
-                  DropdownMenuItem(value: 'miles', child: Text('Miles (mi)')),
+                  DropdownMenuItem(value: MeasurementUnit.meters, child: Text('Meters (m)')),
+                  DropdownMenuItem(value: MeasurementUnit.feet, child: Text('Feet (ft)')),
                 ],
                 onChanged: (value) {
-                  setState(() {
-                    _selectedUnit = value!;
-                  });
+                  if (value != null) {
+                    settingsProvider.setUnit(value);
+                  }
                 },
               ),
             ),
@@ -106,7 +93,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 12.0),
             child: Text(
-              'Language',
+              l10n.language,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: Colors.teal,
                 fontWeight: FontWeight.bold,
@@ -120,19 +107,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: isDark ? Colors.grey[800] : Colors.grey[100],
             ),
             child: ListTile(
-              title: const Text('App Language'),
-              subtitle: const Text('Select your preferred language'),
-              trailing: DropdownButton<String>(
-                value: _selectedLanguage,
+              title: Text(l10n.appLanguage),
+              subtitle: Text(l10n.selectLanguage),
+              trailing: DropdownButton<Locale>(
+                value: settingsProvider.locale,
                 underline: const SizedBox(),
                 items: const [
-                  DropdownMenuItem(value: 'English', child: Text('English')),
-                  DropdownMenuItem(value: 'Français', child: Text('Français')),
+                  DropdownMenuItem(value: Locale('en'), child: Text('English')),
+                  DropdownMenuItem(value: Locale('fr'), child: Text('Français')),
                 ],
                 onChanged: (value) {
-                  setState(() {
-                    _selectedLanguage = value!;
-                  });
+                  if (value != null) {
+                    settingsProvider.setLocale(value);
+                  }
                 },
               ),
             ),

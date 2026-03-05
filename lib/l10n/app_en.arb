@@ -1,0 +1,67 @@
+{
+  "appTitle": "FieldMeasure",
+  "getHeight": "Get Height",
+  "getDistance": "Get Distance",
+  "settings": "Settings",
+  "appearance": "Appearance",
+  "darkMode": "Dark Mode",
+  "toggleTheme": "Toggle between light and dark theme",
+  "measurements": "Measurements",
+  "unitSystem": "Unit System",
+  "chooseUnit": "Choose your preferred measurement unit",
+  "language": "Language",
+  "appLanguage": "App Language",
+  "selectLanguage": "Select your preferred language",
+  "aboutFieldMeasure": "About FieldMeasure",
+  "aboutDescription": "This app helps you measure distances and heights using your phone's sensors.\nIt may be used by people working in the field (such as lumberjacks or construction workers), or even for fun.\n\nThe app's accuracy depends on the phone sensor's accuracy",
+  "createdBy": "Created by Mohamed-Amine Benali",
+  "close": "Close",
+  "tiltAngle": "Tilt Angle",
+  "height": "Height",
+  "yourDistanceFromObject": "Your distance from object: {distance} {unit}",
+  "@yourDistanceFromObject": {
+    "placeholders": {
+      "distance": { "type": "String" },
+      "unit": { "type": "String" }
+    }
+  },
+  "cameraPermissionRequired": "Camera Permission Required",
+  "cameraPermissionDesc": "This app needs camera access to measure object heights. Please grant camera permission to continue.",
+  "grantPermission": "Grant Permission",
+  "openSettings": "Open Settings",
+  "cancel": "Cancel",
+  "measureDistance": "Measure Distance",
+  "knownDistance": "Known Distance: {distance} {unit}",
+  "@knownDistance": {
+    "placeholders": {
+      "distance": { "type": "String" },
+      "unit": { "type": "String" }
+    }
+  },
+  "step1Title": "Step 1: Look at Your Object & Move",
+  "step1Desc": "First, spot your object. Now, walk straight to your side for a known distance (e.g., 5 meters). Use this slider to enter that distance.",
+  "step2Title": "Step 2: Set Your Reference",
+  "step2Desc": "Great! Now that you've moved, aim your phone back at the exact spot where you were first standing and tap this button.",
+  "step3Title": "Step 3: Measure!",
+  "step3Desc": "Finally, slowly turn your phone to aim back at the object. The calculated distance will appear here instantly!",
+  "tapToSkip": "Tap to skip and continue",
+  "setReference": "Set Reference",
+  "resetReference": "Reset Reference",
+  "angle": "Angle",
+  "distance": "Distance",
+  "gpsDistance": "GPS Distance",
+  "point": "Point {label}",
+  "@point": {
+    "placeholders": {
+      "label": { "type": "String" }
+    }
+  },
+  "notSet": "Not Set",
+  "reset": "Reset",
+  "locationServicesDisabled": "Location Services Disabled",
+  "locationServicesDesc": "Please enable location services in your device settings to measure distances.",
+  "locationPermissionRequired": "Location Permission Required",
+  "locationPermissionDesc": "This app needs location access to measure distances between two GPS points.",
+  "checkAgain": "Check Again",
+  "tryAgain": "Try Again"
+}
